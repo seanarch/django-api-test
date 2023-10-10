@@ -55,10 +55,9 @@ def menu_items(request):
         return Response(serialized_item.data)
     elif request.method == 'POST':
         serialized_item = MenuItemSerializer(data = request.data) 
-        if serialized_item.is_valid(): 
-            serialized_item.save()
-            return Response(serialized_item.data, status=status.HTTP_201_CREATED) 
-    return Response(serialized_item.errors, status=status.HTTP_400_BAD_REQUEST)
+        serialized_item.is_valid(raise_exception=True) 
+        serialized_item.save()
+        return Response(serialized_item.data, status=status.HTTP_201_CREATED)  
 
 @api_view(['GET', 'POST']) 
 def single_item(request, id): 

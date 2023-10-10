@@ -42,18 +42,34 @@
 
 from rest_framework.response import Response 
 from rest_framework.decorators import api_view 
+from rest_framework import status
 from .models import MenuItem 
 from .serializers import MenuItemSerializer
 from django.shortcuts import get_object_or_404
 
-@api_view() 
+@api_view(['GET', 'POST']) 
 def menu_items(request): 
-    items = MenuItem.objects.all() 
-    serialized_item = MenuItemSerializer(items, many=True)
-    return Response(serialized_item.data)
+    if request.method == 'GET':
+        items = MenuItem.objects.select_related('category').all() 
+        serialized_item = MenuItemSerializer(items, many=True)
+        return Response(serialized_item.data)
+    elif request.method == 'POST':
+        serialized_item = MenuItemSerializer(data = request.data) 
+        if serialized_item.is_valid(): 
+            serialized_item.save()
+            return Response(serialized_item.data, status=status.HTTP_201_CREATED) 
+    return Response(serialized_item.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view() 
+@api_view(['GET', 'POST']) 
 def single_item(request, id): 
-    item = get_object_or_404(MenuItem, pk=id)
-    serialized_item = MenuItemSerializer(item) 
-    return Response(serialized_item.data)
+    if request.method == 'GET':
+        item = get_object_or_404(MenuItem, pk=id)
+        serialized_item = MenuItemSerializer(item)
+        return Response(serialized_item.data)
+    elif request.method == 'POST':
+        item = get_object_or_404(MenuItem, pk=id)
+        serialized_item = MenuItemSerializer(item, data=request.data)
+        if serialized_item.is_valid():
+            serialized_item.save()
+            return Response(serialized_item.data, status=status.HTTP_200_OK)  # You may change the status code as needed
+        return Response(serialized_item.errors, status=status.HTTP_400_BAD_REQUEST)
